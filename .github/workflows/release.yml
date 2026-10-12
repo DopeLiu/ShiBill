@@ -21,8 +21,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # 刻意不使用 android-actions/setup-android@v3：
+      # 该 action 默认执行 `sdkmanager tools`，而 Android SDK 仓库已移除 `tools` 包
+      # （被 `cmdline-tools` 取代），必然报 "Failed to find package 'tools'" 并使整个作业失败。
+      # ubuntu-latest 运行器本身已预装 Android SDK：ANDROID_HOME=/usr/local/lib/android/sdk，
+      # 内含 platforms;android-35 与本项目所需 build-tools，环境变量也已就绪，无需再装。
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" | sort -V | tail -3
+          ls "$ANDROID_HOME/build-tools" | sort -V | tail -3
 
       - name: Prepare signing config
         run: |

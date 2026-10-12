@@ -1,5 +1,6 @@
 package com.shibill.app.ui.rules
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,18 +11,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,8 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +50,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.shibill.app.ShiBillApp
 import com.shibill.app.data.db.RuleEntity
+import com.shibill.app.ui.components.GroupCard
+import com.shibill.app.ui.components.RowDivider
+import com.shibill.app.ui.components.SectionTitle
 import com.shibill.app.ui.nav.Routes
+import com.shibill.app.ui.theme.AmountStyle
+import com.shibill.app.ui.theme.AppSpacing
+import com.shibill.app.ui.theme.MonoDigits
 
 /** 规则页（§7）：规则列表（开关/编辑/新建）、包名监控管理、自动入账开关、分类关键词入口 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,23 +92,23 @@ fun RulesScreen(navController: NavHostController) {
         ) {
             // 自动入账开关（§5.3）
             item(key = "auto-commit") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("自动入账（免确认）", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "开启后解析成功的账单直接入库，通知仅作展示",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = state.autoCommit,
-                        onCheckedChange = vm::setAutoCommit
+                GroupCard(modifier = Modifier.padding(top = AppSpacing.md)) {
+                    ListItem(
+                        // 副标题并入标题块：ListItem 判定为"单行"，下限 56dp 且内容超出时自动增高（见 SettingRow 注释）
+                        headlineContent = {
+                            Column {
+                                Text("自动入账（免确认）", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "开启后解析成功的账单直接入库，通知仅作展示",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        trailingContent = {
+                            Switch(checked = state.autoCommit, onCheckedChange = vm::setAutoCommit)
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
             }
@@ -107,22 +117,30 @@ fun RulesScreen(navController: NavHostController) {
                 SectionTitle("解析规则（按优先级从高到低匹配）")
             }
 
-            items(state.rules, key = { "rule-${it.id}" }) { rule ->
-                RuleCard(
-                    rule = rule,
-                    onToggle = { enabled -> vm.setRuleEnabled(rule, enabled) },
-                    onEdit = { editingRule = rule },
-                    onDelete = { vm.deleteRule(rule) }
-                )
+            item(key = "rule-list") {
+                GroupCard {
+                    state.rules.forEachIndexed { index, rule ->
+                        if (index > 0) RowDivider()
+                        RuleCard(
+                            rule = rule,
+                            onToggle = { enabled -> vm.setRuleEnabled(rule, enabled) },
+                            onEdit = { editingRule = rule },
+                            onDelete = { vm.deleteRule(rule) }
+                        )
+                    }
+                }
             }
 
             item(key = "rule-add") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .padding(horizontal = AppSpacing.screenH, vertical = AppSpacing.xs)
                 ) {
-                    OutlinedButton(onClick = { creatingRule = true }) {
+                    OutlinedButton(
+                        onClick = { creatingRule = true },
+                        shape = MaterialTheme.shapes.small
+                    ) {
                         Icon(Icons.Filled.Add, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
                         Text("新建规则")
@@ -134,24 +152,28 @@ fun RulesScreen(navController: NavHostController) {
                 SectionTitle("监控包名（通知监听范围，可与规则包名并用）")
             }
 
-            items(state.monitoredPackages.sorted().toList(), key = { "pkg-$it" }) { pkg ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = pkg,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = { vm.removePackage(pkg) }) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = "移除 $pkg",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            val packages = state.monitoredPackages.sorted().toList()
+            if (packages.isNotEmpty()) {
+                item(key = "package-list") {
+                    GroupCard {
+                        packages.forEachIndexed { index, pkg ->
+                            if (index > 0) RowDivider()
+                            ListItem(
+                                headlineContent = {
+                                    Text(pkg, style = MaterialTheme.typography.bodyMedium)
+                                },
+                                trailingContent = {
+                                    IconButton(onClick = { vm.removePackage(pkg) }) {
+                                        Icon(
+                                            Icons.Filled.Delete,
+                                            contentDescription = "移除 $pkg",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                            )
+                        }
                     }
                 }
             }
@@ -160,9 +182,12 @@ fun RulesScreen(navController: NavHostController) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .padding(horizontal = AppSpacing.screenH, vertical = AppSpacing.xs)
                 ) {
-                    OutlinedButton(onClick = { addingPackage = true }) {
+                    OutlinedButton(
+                        onClick = { addingPackage = true },
+                        shape = MaterialTheme.shapes.small
+                    ) {
                         Icon(Icons.Filled.Add, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
                         Text("添加包名（银行 App 等）")
@@ -175,15 +200,28 @@ fun RulesScreen(navController: NavHostController) {
             }
 
             item(key = "category-entry") {
-                TextButton(
-                    onClick = { navController.navigate(Routes.CATEGORY_KEYWORDS) },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text("编辑分类关键词 →")
+                GroupCard {
+                    ListItem(
+                        headlineContent = {
+                            Text("编辑分类关键词", style = MaterialTheme.typography.bodyMedium)
+                        },
+                        trailingContent = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        // 单行 ListItem 下限本就是 56dp，不再强制高度（强制会在文字换行时裁切）
+                        modifier = Modifier.clickable {
+                            navController.navigate(Routes.CATEGORY_KEYWORDS)
+                        }
+                    )
                 }
             }
 
-            item(key = "bottom-space") { Spacer(Modifier.height(24.dp)) }
+            item(key = "bottom-space") { Spacer(Modifier.height(AppSpacing.xxl)) }
         }
     }
 
@@ -221,16 +259,6 @@ fun RulesScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-    )
-}
-
-@Composable
 private fun RuleCard(
     rule: RuleEntity,
     onToggle: (Boolean) -> Unit,
@@ -238,11 +266,10 @@ private fun RuleCard(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
-        Column(Modifier.padding(12.dp)) {
+        Column(Modifier.padding(AppSpacing.md)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = rule.name,
@@ -260,15 +287,15 @@ private fun RuleCard(
                 Switch(checked = rule.enabled, onCheckedChange = onToggle)
             }
             Text(
-                text = "包名：${rule.appPackage.ifEmpty { "（任意，仅截屏来源生效）" }} · 优先级 ${rule.priority}",
+                text = "包名：${rule.appPackage.ifEmpty { "（未设置，不生效）" }} · 优先级 ${rule.priority}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = rule.pattern,
-                style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace,
+                style = AmountStyle.Meta,
+                fontFamily = MonoDigits,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -314,7 +341,7 @@ private fun RuleEditDialog(
                 OutlinedTextField(
                     value = packages,
                     onValueChange = { packages = it },
-                    label = { Text("包名（逗号分隔；留空=仅截屏来源）") },
+                    label = { Text("包名（逗号分隔，必填）") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

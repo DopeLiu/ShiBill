@@ -3,7 +3,6 @@ package com.shibill.app.parse
 import com.shibill.app.data.db.RuleDao
 import com.shibill.app.data.db.toDomainRule
 import com.shibill.app.parse.model.Accounts
-import com.shibill.app.parse.model.BillSource
 import com.shibill.app.parse.model.BillType
 import com.shibill.app.parse.model.ParsedBill
 import com.shibill.app.parse.model.RawEvent
@@ -67,17 +66,9 @@ class RuleEngine(private val ruleDao: RuleDao) {
         return null
     }
 
-    /**
-     * 包名匹配：规则 app_package 为逗号分隔多包名；
-     * 空串通配规则仅对 SCREENSHOT 来源生效。
-     */
+    /** 包名匹配：规则 app_package 为逗号分隔多包名；为空时不匹配任何事件 */
     private fun ruleMatchesPackage(rule: Rule, event: RawEvent): Boolean {
-        val packages = rule.packages()
-        return if (packages.isEmpty()) {
-            event.source == BillSource.SCREENSHOT
-        } else {
-            packages.contains(event.appPackage)
-        }
+        return rule.packages().contains(event.appPackage)
     }
 
     /** direction → 收支方向：含"收/到账"为收入，其余（含未捕获）默认支出 */

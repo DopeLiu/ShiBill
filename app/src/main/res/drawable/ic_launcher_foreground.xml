@@ -1,41 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 记账本 + ¥ 图形（108x108 自适应图标前景层） -->
+<!-- 层叠账卡：浅青后卡（微旋错位）+ 白色前卡 + 账目横线（108x108 自适应图标前景层） -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 账本封面（白色圆角矩形） -->
+    <!-- 后卡：浅青，向右上错位并轻微旋转 -->
+    <group
+        android:name="back_card"
+        android:pivotX="62"
+        android:pivotY="47"
+        android:rotation="-14">
+        <path
+            android:fillColor="#7FD4CC"
+            android:pathData="M54,34 H70 A6,6 0 0 1 76,40 V54 A6,6 0 0 1 70,60 H54 A6,6 0 0 1 48,54 V40 A6,6 0 0 1 54,34 Z" />
+    </group>
+
+    <!-- 前卡：白色 -->
     <path
+        android:name="front_card"
         android:fillColor="#FFFFFF"
-        android:pathData="M28,30 h52 a6,6 0 0 1 6,6 v36 a6,6 0 0 1 -6,6 h-52 a6,6 0 0 1 -6,-6 v-36 a6,6 0 0 1 6,-6 z" />
+        android:pathData="M38,44 H56 A8,8 0 0 1 64,52 V66 A8,8 0 0 1 56,74 H38 A8,8 0 0 1 30,66 V52 A8,8 0 0 1 38,44 Z" />
 
-    <!-- 账本装订线（左侧竖线） -->
+    <!-- 账目条目 -->
     <path
-        android:strokeColor="#0F766E"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:pathData="M34,38 v32" />
-
-    <!-- ¥ 上半：两撇 -->
-    <path
+        android:name="entries"
         android:strokeColor="#0F766E"
         android:strokeWidth="5"
         android:strokeLineCap="round"
-        android:pathData="M48,42 L56,54 M64,42 L56,54" />
-
-    <!-- ¥ 竖笔 -->
-    <path
-        android:strokeColor="#0F766E"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M56,54 V66" />
-
-    <!-- ¥ 两横 -->
-    <path
-        android:strokeColor="#0F766E"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M47,56 H65 M47,61 H65" />
+        android:pathData="M38,54 H56 M38,64 H47" />
 </vector>

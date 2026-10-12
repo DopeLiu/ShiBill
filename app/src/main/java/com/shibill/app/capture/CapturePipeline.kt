@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.first
 
 /**
  * 采集管道（§5.3 核心链路）：解析 → 分类 → 去重审计 → 通知 / 暂存 / 自动入库。
- * 通知监听服务与无障碍截屏服务共用。
+ * 由通知监听服务调用。
  */
 class CapturePipeline(
     private val context: Context,

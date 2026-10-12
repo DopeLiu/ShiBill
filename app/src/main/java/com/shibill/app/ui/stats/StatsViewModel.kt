@@ -91,12 +91,9 @@ class StatsViewModel(
         )
     }
 
-    fun previousMonth() {
-        month.value = month.value.minusMonths(1)
-    }
-
-    fun nextMonth() {
-        month.value = month.value.plusMonths(1)
+    /** 跳转到指定的年月（由 MonthPickerSheet 调用）。 */
+    fun selectMonth(target: YearMonth) {
+        month.value = target
     }
 
     fun updateType(newType: BillType) {

@@ -41,11 +41,29 @@ object SeedData {
 
     fun isIncomeCategory(name: String): Boolean = name in incomeCategoryNames
 
+    /**
+     * 正则写法约定（2026-10-13 放宽微信规则，勿改回"品牌词后必须紧跟冒号"）：
+     *
+     * 监听服务把 标题 + 正文 + 大文本 用换行拼接后交给正则（见 BillNotificationListenerService），
+     * 而通知标题恒为「微信支付」/「支付宝通知」，正文是否自带品牌词决定了规则能否命中：
+     *   微信收款 → 正文自带品牌词，"微信支付\n微信支付收款0.01元(朋友到店)"
+     *   微信消费 → 正文不带品牌词，拼接后是 "微信支付\n已支付¥10.00"
+     *   支付宝收款 → 正文自带品牌词，"支付宝通知\n支付宝成功收款1.00元。"
+     *
+     * 因此两类规则的写法**刻意不同**，不是笔误：
+     * - 微信支付通知：品牌词与金额之间可能是换行，**冒号并非恒有**（只有合并通知形态才带半角冒号），
+     *   故必须把冒号写成可选 [：:]?，并允许方向词前后出现空白。
+     *   旧写法 "微信支付[：:]" 把冒号写死 → "微信支付\n已支付¥10.00" 整笔解析失败、永不入账。
+     * - 支付宝支付通知：冒号本来就是可选的（[：:]?），锚点集合 {支付宝, 支付宝付款, 支付成功}
+     *   已覆盖公开来源中出现的全部正文形态，故**不改**。
+     *
+     * 空白只用 \s* 放宽，**不得**改成 [^\d]{0,n} 之类的模糊跳过，否则聊天文本里的数字会被误判入账。
+     */
     val rules: List<RuleEntity> = listOf(
         RuleEntity(
             name = "微信收款",
             appPackage = "com.tencent.mm",
-            pattern = "微信支付(?<direction>收款)[¥￥]?(?<amount>[\\d,]+\\.?\\d*)",
+            pattern = "微信支付\\s*(?<direction>收款)\\s*[¥￥]?\\s*(?<amount>[\\d,]+\\.?\\d*)",
             priority = 101
         ),
         RuleEntity(
@@ -57,7 +75,7 @@ object SeedData {
         RuleEntity(
             name = "微信支付通知",
             appPackage = "com.tencent.mm",
-            pattern = "微信支付[：:]\\s*(?<direction>已支付|已收款|支付成功|收款成功)?[¥￥]?(?<amount>[\\d,]+\\.?\\d*)",
+            pattern = "微信支付[：:]?\\s*(?:(?<direction>已支付|已付款|成功支付|支付成功|付款成功|已收款|成功收款|收款成功)\\s*)?[¥￥]?\\s*(?<amount>[\\d,]+\\.?\\d*)",
             priority = 100
         ),
         RuleEntity(
@@ -65,12 +83,6 @@ object SeedData {
             appPackage = "com.eg.android.AlipayGphone",
             pattern = "(?:支付宝|支付宝付款|支付成功)[：:]?\\s*[¥￥]?(?<amount>[\\d,]+\\.?\\d*)",
             priority = 100
-        ),
-        RuleEntity(
-            name = "截屏文本通用",
-            appPackage = "",
-            pattern = "(?:支付成功|付款成功|交易成功)[^\\d]{0,20}[¥￥]?(?<amount>[\\d,]+\\.?\\d*)",
-            priority = 10
         )
     )
 

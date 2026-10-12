@@ -46,7 +46,6 @@ class CsvExporter(private val db: AppDatabase) {
 
     private fun sourceLabel(source: BillSource): String = when (source) {
         BillSource.NOTIFICATION -> "通知"
-        BillSource.SCREENSHOT -> "截屏"
         BillSource.IMPORT -> "导入"
         BillSource.MANUAL -> "手动"
     }

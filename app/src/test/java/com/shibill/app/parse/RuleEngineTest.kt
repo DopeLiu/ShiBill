@@ -80,16 +80,6 @@ class RuleEngineTest {
     }
 
     @Test
-    fun `8 截屏 OCR 文本 → 通用规则命中`() = runBlocking {
-        val bill = engine.parse(
-            event("...支付成功\n¥12.50\n美团外卖订单...", source = BillSource.SCREENSHOT)
-        )
-        assertNotNull(bill)
-        assertEquals(BillType.EXPENSE, bill!!.type)
-        assertEquals(12.50, bill.amount, 0.001)
-    }
-
-    @Test
     fun `9 同一通知 3 秒内两次 → 指纹一致（可被去重）`() = runBlocking {
         val first = engine.parse(event("微信支付：已支付¥25.00", at = fixedTime))!!
         val second = engine.parse(event("微信支付：已支付¥25.00", at = fixedTime + 3_000L))!!
@@ -199,22 +189,6 @@ class RuleEngineTest {
         assertNull(engine.parse(event("微信支付：余额不足，已支付¥25.00")))
     }
 
-    // ---------- 通配规则（空包名）来源限制 ----------
-
-    @Test
-    fun `26 截屏通用规则不作用于通知来源`() = runBlocking {
-        assertNull(
-            engine.parse(event("交易成功 45.00", source = BillSource.NOTIFICATION))
-        )
-    }
-
-    @Test
-    fun `27 截屏通用规则作用于截屏来源`() = runBlocking {
-        val bill = engine.parse(event("交易成功 45.00", source = BillSource.SCREENSHOT))
-        assertNotNull(bill)
-        assertEquals(45.0, bill!!.amount, 0.001)
-    }
-
     // ---------- 自定义规则 ----------
 
     @Test
@@ -277,6 +251,66 @@ class RuleEngineTest {
             bill.fingerprint
         )
         assertTrue(bill.fingerprint.length == 40)
+    }
+
+    // ---------- 两行式通知（2026-10-13 内置规则放宽：允许换行与方向词前后空白） ----------
+
+    @Test
+    fun `33 微信支付 标题与正文分两行 → 仍可解析`() = runBlocking {
+        // 实测形态：标题「微信支付」+ 换行 + 正文「已支付¥10.00」
+        val bill = engine.parse(event("微信支付\n已支付¥10.00"))
+        assertNotNull(bill)
+        assertEquals(BillType.EXPENSE, bill!!.type)
+        assertEquals(10.00, bill.amount, 0.001)
+    }
+
+    @Test
+    fun `34 微信支付 方向词与金额间有空格 → 仍可解析`() = runBlocking {
+        // 合并通知形态：「微信支付:成功支付 15.00 元」
+        val bill = engine.parse(event("微信支付:成功支付 15.00 元"))
+        assertNotNull(bill)
+        assertEquals(15.00, bill!!.amount, 0.001)
+    }
+
+    @Test
+    fun `35 微信收款 分两行 → 收入`() = runBlocking {
+        // 实测形态：标题「微信支付」+ 正文「微信支付收款0.01元(朋友到店)」
+        val bill = engine.parse(event("微信支付\n微信支付收款0.01元(朋友到店)"))
+        assertNotNull(bill)
+        assertEquals(BillType.INCOME, bill!!.type)
+        assertEquals(0.01, bill.amount, 0.001)
+    }
+
+    @Test
+    fun `36 支付宝收款 分两行 → 收入（支付宝规则未改，回归）`() = runBlocking {
+        // 实测形态：标题「支付宝通知」+ 正文「支付宝成功收款1.00元。」
+        val bill = engine.parse(event("支付宝通知\n支付宝成功收款1.00元。", pkg = ALIPAY))
+        assertNotNull(bill)
+        assertEquals(BillType.INCOME, bill!!.type)
+        assertEquals(1.00, bill.amount, 0.001)
+    }
+
+    @Test
+    fun `37 支付宝支付 分两行 → 仍可解析（支付宝规则未改，回归）`() = runBlocking {
+        // 支付宝规则的冒号本来就是可选的，正文自带「支付成功」锚点即可命中
+        val bill = engine.parse(event("支付宝通知\n支付成功 45.20元", pkg = ALIPAY))
+        assertNotNull(bill)
+        assertEquals(BillType.EXPENSE, bill!!.type)
+        assertEquals(45.20, bill!!.amount, 0.001)
+    }
+
+    @Test
+    fun `38 支付宝正文不带品牌词且首词非锚点 → 不解析（已知缺口，待真机正文确认）`() = runBlocking {
+        // 「支付宝通知」里"支付宝"后面被"通知"挡住，正文"已付款45.20元"又无品牌词/锚点 →
+        // 当前规则无法命中。是否要覆盖取决于真机抓到的正文，不做猜测性放宽。
+        assertNull(engine.parse(event("支付宝通知\n已付款45.20元", pkg = ALIPAY)))
+    }
+
+    @Test
+    fun `39 放宽后聊天文本仍不误判`() = runBlocking {
+        // 空白只放宽到 \s*：品牌词与数字之间夹了汉字时不得入账
+        assertNull(engine.parse(event("张三\n微信支付转你了100元")))
+        assertNull(engine.parse(event("张三\n微信支付很方便，下次还用")))
     }
 
     private fun com.shibill.app.data.db.RuleEntity.toDomain() =

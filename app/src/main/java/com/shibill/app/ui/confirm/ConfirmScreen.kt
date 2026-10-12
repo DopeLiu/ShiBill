@@ -49,9 +49,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
@@ -61,6 +63,8 @@ import com.shibill.app.ShiBillApp
 import com.shibill.app.data.db.CategoryEntity
 import com.shibill.app.parse.model.BillType
 import com.shibill.app.ui.components.CategoryBadge
+import com.shibill.app.ui.components.GroupCard
+import com.shibill.app.ui.theme.AppSpacing
 import com.shibill.app.util.TimeUtils
 import kotlinx.coroutines.launch
 import java.time.ZoneOffset
@@ -119,65 +123,87 @@ fun ConfirmScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
         ) {
-            OutlinedTextField(
-                value = state.amountText,
-                onValueChange = vm::updateAmount,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                label = { Text("金额") },
-                prefix = { Text("¥", style = MaterialTheme.typography.headlineMedium) },
-                textStyle = MaterialTheme.typography.headlineMedium,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
-            )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(AppSpacing.sm))
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = state.type == BillType.EXPENSE,
-                    onClick = { vm.updateType(BillType.EXPENSE) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                ) { Text("支出") }
-                SegmentedButton(
-                    selected = state.type == BillType.INCOME,
-                    onClick = { vm.updateType(BillType.INCOME) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                ) { Text("收入") }
+            // 金额区（含收支方向）
+            GroupCard {
+                Column(Modifier.padding(AppSpacing.card)) {
+                    OutlinedTextField(
+                        value = state.amountText,
+                        onValueChange = vm::updateAmount,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        label = { Text("金额") },
+                        prefix = { Text("¥", style = MaterialTheme.typography.titleLarge) },
+                        textStyle = TextStyle(fontSize = 20.sp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true
+                    )
+                    Spacer(Modifier.height(AppSpacing.sm))
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = state.type == BillType.EXPENSE,
+                            onClick = { vm.updateType(BillType.EXPENSE) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                            modifier = Modifier.height(36.dp)
+                        ) { Text("支出") }
+                        SegmentedButton(
+                            selected = state.type == BillType.INCOME,
+                            onClick = { vm.updateType(BillType.INCOME) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                            modifier = Modifier.height(36.dp)
+                        ) { Text("收入") }
+                    }
+                }
             }
-            Spacer(Modifier.height(20.dp))
 
-            SectionLabel("分类")
-            Spacer(Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                maxItemsInEachRow = 4
-            ) {
-                state.categories.forEach { category ->
-                    CategoryGridItem(
-                        category = category,
-                        selected = category.id == state.categoryId,
-                        onClick = { vm.updateCategory(category.id) },
-                        modifier = Modifier.weight(1f)
+            Spacer(Modifier.height(AppSpacing.sm))
+
+            // 分类选择区
+            GroupCard {
+                Column(Modifier.padding(AppSpacing.card)) {
+                    SectionLabel("分类")
+                    Spacer(Modifier.height(AppSpacing.xs))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        maxItemsInEachRow = 4
+                    ) {
+                        state.categories.forEach { category ->
+                            CategoryGridItem(
+                                category = category,
+                                selected = category.id == state.categoryId,
+                                onClick = { vm.updateCategory(category.id) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(AppSpacing.sm))
+
+            // 备注区
+            GroupCard {
+                Column(Modifier.padding(AppSpacing.card)) {
+                    OutlinedTextField(
+                        value = state.note,
+                        onValueChange = vm::updateNote,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("备注") },
+                        minLines = 1,
+                        maxLines = 4
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = state.note,
-                onValueChange = vm::updateNote,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("备注") },
-                minLines = 2,
-                maxLines = 5
-            )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(AppSpacing.sm))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AppSpacing.screenH),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("日期", style = MaterialTheme.typography.bodyLarge)
@@ -186,7 +212,7 @@ fun ConfirmScreen(navController: NavHostController) {
                     Text(TimeUtils.formatDate(state.occurredAt))
                 }
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(AppSpacing.sm))
 
             Button(
                 onClick = {
@@ -199,13 +225,15 @@ fun ConfirmScreen(navController: NavHostController) {
                     }
                 },
                 enabled = vm.amountValid,
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = AppSpacing.screenH)
                     .height(48.dp)
             ) {
                 Text("保存")
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(AppSpacing.lg))
         }
     }
 
@@ -255,8 +283,8 @@ private fun CategoryGridItem(
             .padding(3.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (selected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surface
+                if (selected) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHigh
             )
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
@@ -268,6 +296,8 @@ private fun CategoryGridItem(
         Text(
             text = category.name,
             style = MaterialTheme.typography.labelSmall,
+            color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+            else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

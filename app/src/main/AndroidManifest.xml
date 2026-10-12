@@ -6,13 +6,6 @@
     <!-- 唯一联网点：检查更新（GitHub Releases） -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!--
-      注：不使用前台服务（Foreground Service）。
-      API 34+ 前台服务类型清单中不存在 accessibility 类型，且无障碍服务本身即为
-      系统绑定服务（生命周期由系统托管），"记一笔"入口通过常驻 ongoing 通知实现。
-    -->
-
-
     <application
         android:name=".ShiBillApp"
         android:allowBackup="true"
@@ -43,25 +36,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-
-        <!-- 兜底通道：无障碍截屏（API 30+，默认关闭） -->
-        <service
-            android:name=".capture.BillAccessibilityService"
-            android:exported="false"
-            android:label="拾账-截屏识别"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
-
-        <!-- 「记一笔」截屏按钮 → 触发无障碍服务截屏 -->
-        <receiver
-            android:name=".capture.ScreenshotTriggerReceiver"
-            android:exported="false" />
 
     </application>
 

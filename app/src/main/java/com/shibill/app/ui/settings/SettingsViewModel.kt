@@ -3,7 +3,6 @@ package com.shibill.app.ui.settings
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.shibill.app.BuildConfig
 import com.shibill.app.data.GithubReleaseChecker
 import com.shibill.app.data.backup.AlipayCsvImporter
@@ -12,41 +11,14 @@ import com.shibill.app.data.backup.CsvExporter
 import com.shibill.app.data.backup.WeChatXlsxImporter
 import com.shibill.app.data.db.AppDatabase
 import com.shibill.app.data.db.BillWriter
-import com.shibill.app.data.prefs.SettingsStore
 import com.shibill.app.parse.Classifier
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-
-data class SettingsUiState(
-    val screenshotEnabled: Boolean = false,
-    val screenshotAutoTrigger: Boolean = false
-)
 
 class SettingsViewModel(
     private val context: Context,
-    private val db: AppDatabase,
-    private val settingsStore: SettingsStore
+    private val db: AppDatabase
 ) : ViewModel() {
 
     val versionName: String = BuildConfig.VERSION_NAME
-
-    val uiState: StateFlow<SettingsUiState> = combine(
-        settingsStore.screenshotEnabled,
-        settingsStore.screenshotAutoTrigger
-    ) { enabled, auto ->
-        SettingsUiState(screenshotEnabled = enabled, screenshotAutoTrigger = auto)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
-
-    fun setScreenshotEnabled(value: Boolean) = viewModelScope.launch {
-        settingsStore.setScreenshotEnabled(value)
-    }
-
-    fun setScreenshotAutoTrigger(value: Boolean) = viewModelScope.launch {
-        settingsStore.setScreenshotAutoTrigger(value)
-    }
 
     // ---- 数据导出 / 导入（SAF Uri）----
 

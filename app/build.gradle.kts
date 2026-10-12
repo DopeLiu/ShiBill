@@ -42,11 +42,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // ML Kit bundled 模型自带 4 个 ABI 的 native 库（合计约 41MB，含 x86 模拟器架构）；
-            // 发布版仅保留 ARM 双架构，将体积增幅控制在方案 §10 M3 要求的 <40MB 以内。
-            ndk {
-                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-            }
             if (rootProject.file("keystore.properties").exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
@@ -96,7 +91,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.mlkit.text.recognition.chinese)
     implementation(libs.vico.compose.m3)
 
     testImplementation(libs.junit)

@@ -2,12 +2,7 @@
 <resources>
     <string name="app_name">拾账</string>
 
-    <string name="accessibility_service_description">截屏自动记账（可选功能）：仅在检测到支付成功页面或点击"记一笔"时截取屏幕并用本地 OCR 识别金额。截图不保存、不上传、不联网。关闭此服务不影响通知自动记账。</string>
-
     <!-- 通知渠道 -->
     <string name="notification_channel_capture">记账确认</string>
     <string name="notification_channel_capture_desc">捕获到支付后提醒确认入账</string>
-
-    <!-- 截图触发器 -->
-    <string name="action_screenshot_now">记一笔</string>
 </resources>

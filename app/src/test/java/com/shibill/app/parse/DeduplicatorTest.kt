@@ -72,10 +72,10 @@ class DeduplicatorTest {
     }
 
     @Test
-    fun `跨通道（通知与截屏）同一笔支付指纹一致`() {
+    fun `跨通道（通知与导入）同一笔支付指纹一致`() {
         // 当前实现不含 source：同一分钟、同包名、同金额、同商户视为同一笔（见交付说明裁定 2）
         val notificationFp = Deduplicator.fingerprint("com.tencent.mm", 25.0, "", fixedTime)
-        val screenshotFp = Deduplicator.fingerprint("com.tencent.mm", 25.0, "", fixedTime + 5_000L)
-        assertEquals(notificationFp, screenshotFp)
+        val importFp = Deduplicator.fingerprint("com.tencent.mm", 25.0, "", fixedTime + 5_000L)
+        assertEquals(notificationFp, importFp)
     }
 }

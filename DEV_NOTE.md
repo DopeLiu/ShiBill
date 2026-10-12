@@ -449,7 +449,8 @@ fingerprint = SHA1( appPackage | 金额(保留两位小数) | 商户 | occurred_
   ⚠️ **前置条件：该仓库必须是 public 且至少发布过一个 Release，检查更新才能生效。**
   `GithubReleaseChecker` 用的是**匿名**请求，非 200 一律返回 `null`（表现为「已是最新版本（或暂时无法连接更新服务）」）。
   因此：仓库为 private、仓库尚无任何 Release、或尚未推送过 `v*` 标签时，该功能都会**静默失效且不报错**。
-  （已实测本地环境：对 `api.github.com/repos/DopeLiu/ShiBill` 的匿名请求当前返回 404。）
+  实测状态（2026-10-13）：仓库已设为 **public**，匿名访问 `api.github.com/repos/DopeLiu/ShiBill` 返回 **200**；
+  但 `releases/latest` 仍返回 **404**（尚无 Release），故**在发布首个 `v*` 标签之前，检查更新仍不会真正生效**。
 - 签名：仓库根目录存在 `keystore.properties` 时自动启用 release 签名（该文件不入库）。
 - CI：`.github/workflows/release.yml` 在推送 `v*` 标签时跑单测 → 构建 release APK → 上传到 GitHub Release。签名材料通过 GitHub Secrets 注入。
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 记账本 + ¥ 图形（108x108 自适应图标前景层） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 账本封面（白色圆角矩形） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,30 h52 a6,6 0 0 1 6,6 v36 a6,6 0 0 1 -6,6 h-52 a6,6 0 0 1 -6,-6 v-36 a6,6 0 0 1 6,-6 z" />
+
+    <!-- 账本装订线（左侧竖线） -->
+    <path
+        android:strokeColor="#0F766E"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M34,38 v32" />
+
+    <!-- ¥ 上半：两撇 -->
+    <path
+        android:strokeColor="#0F766E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M48,42 L56,54 M64,42 L56,54" />
+
+    <!-- ¥ 竖笔 -->
+    <path
+        android:strokeColor="#0F766E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M56,54 V66" />
+
+    <!-- ¥ 两横 -->
+    <path
+        android:strokeColor="#0F766E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M47,56 H65 M47,61 H65" />
+</vector>

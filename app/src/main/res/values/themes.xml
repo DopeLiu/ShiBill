@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose 自绘 UI，平台主题只负责窗口与状态栏基础表现 -->
+    <style name="Theme.ShiBill" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

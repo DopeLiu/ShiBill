@@ -1,0 +1,44 @@
+# ===== Gradle / 构建产物（不入库，可随时代码重新生成）=====
+.gradle/
+build/
+app/build/
+.kotlin/
+
+# ===== 本机私有配置（含本机 SDK 绝对路径）=====
+local.properties
+
+# ===== IDE（Android Studio / IntelliJ / PyCharm）=====
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ===== 签名与密钥（绝不入库；CI 通过 GitHub Secrets 注入，见 .github/workflows/release.yml）=====
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+
+# ===== 散落的安装包（防止误传二进制产物）=====
+*.apk
+*.aab
+
+# ===== 内存/崩溃转储与日志 =====
+*.hprof
+*.log
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== Agent 工作目录（本地笔记与状态；如需把 AI 工作记忆一并备份，删掉此行即可）=====
+.workbuddy/
+
+# 注意：以下内容必须入库，请勿加入忽略规则
+#   gradle/wrapper/gradle-wrapper.jar   Gradle Wrapper 运行必需
+#   app/schemas/                        Room 数据库 schema 历史（迁移比对依赖）
+#   gradlew / gradlew.bat               构建入口

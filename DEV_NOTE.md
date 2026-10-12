@@ -60,6 +60,20 @@
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 ```
 
+**但 Java 25 下 `assembleDebug` / 单测正常，`assembleRelease` 会失败**：AGP 8.7.3 的 lint 不支持 Java 25，
+报 `Execution failed for task ':app:lintVitalAnalyzeRelease' > 25.0.3` 或
+`Could not initialize class org.jetbrains.uast.UastFacade`。两种处理方式：
+
+```bash
+# 方式一（推荐）：本地只验证签名产物，跳过 release 的 lint 任务
+./gradlew :app:assembleRelease -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
+
+# 方式二：改用真正的 JDK 17（如安装 temurin 17 并将 JAVA_HOME 指向它）
+```
+
+> **CI 不受影响**：`.github/workflows/release.yml` 用的是 temurin **JDK 17**，lint 可正常运行。
+> 因此本地这段失败**不代表 CI 会失败**，不要据此改 `build.gradle.kts`。
+
 ### 2.3 常用命令
 
 ```bash
@@ -451,8 +465,23 @@ fingerprint = SHA1( appPackage | 金额(保留两位小数) | 商户 | occurred_
   因此：仓库为 private、仓库尚无任何 Release、或尚未推送过 `v*` 标签时，该功能都会**静默失效且不报错**。
   实测状态（2026-10-13）：仓库已设为 **public**，匿名访问 `api.github.com/repos/DopeLiu/ShiBill` 返回 **200**；
   但 `releases/latest` 仍返回 **404**（尚无 Release），故**在发布首个 `v*` 标签之前，检查更新仍不会真正生效**。
-- 签名：仓库根目录存在 `keystore.properties` 时自动启用 release 签名（该文件不入库）。
-- CI：`.github/workflows/release.yml` 在推送 `v*` 标签时跑单测 → 构建 release APK → 上传到 GitHub Release。签名材料通过 GitHub Secrets 注入。
+- 签名：仓库根目录存在 `keystore.properties` 时自动启用 release 签名。**这两个文件都不入库**（`.gitignore` 已覆盖 `*.keystore` / `keystore.properties`）：
+  - `release.keystore` —— PKCS12 密钥库，别名 `shibill`，有效期 30 年
+  - `keystore.properties` —— 含 `storeFile` / `storePassword` / `keyAlias` / `keyPassword`
+- CI：`.github/workflows/release.yml` 在推送 `v*` 标签时跑单测 → 构建 release APK → 上传到 GitHub Release。
+  签名材料通过 **4 个 GitHub Secrets** 注入（工作流会现场生成 `release.keystore` 与 `keystore.properties`）：
+
+  | Secret | 内容 |
+  | --- | --- |
+  | `KEYSTORE_BASE64` | `release.keystore` 的 Base64 编码 |
+  | `KEYSTORE_PASSWORD` | 密钥库口令 |
+  | `KEY_ALIAS` | 密钥别名（`shibill`） |
+  | `KEY_PASSWORD` | 密钥口令 |
+
+  ⚠️ **这 4 个 Secret 缺失时不要推 `v*` 标签**：工作流仍会生成一个空的 `release.keystore`，
+  `keystore.properties` 因文件存在而生效，最终在签名步骤失败、Release 不会产出。
+  发版前可用 API 自查：`GET /repos/{owner}/{repo}/actions/secrets`（只返回名称，不返回值）。
+  ⚠️ **签名私钥一旦丢失，后续版本将无法覆盖安装**（除非用户卸载重装）。务必备份 `release.keystore` 与口令。
 
 ---
 
